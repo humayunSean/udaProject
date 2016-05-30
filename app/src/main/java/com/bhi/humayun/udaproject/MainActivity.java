@@ -1,11 +1,17 @@
 package com.bhi.humayun.udaproject;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import java.util.List;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
 import java.util.ArrayList;
 import java.util.Arrays;
-import android.widget.ListView;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -13,12 +19,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if(savedInstanceState == null){
-            getSupportFragmentManager().beginTransaction().add(R.if.container, new MainFragment()).commit();
+        if(savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction().add(R.id.container, new MainFragment()).commit();
         }
     }
     
-    public static class MainFragment extends Fragment{
+    public static class MainFragment extends Fragment {
         
         ArrayAdapter<String> movieData;
         
