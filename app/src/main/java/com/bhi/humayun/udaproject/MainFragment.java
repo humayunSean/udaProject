@@ -57,7 +57,9 @@ public class MainFragment extends Fragment {
 
         private final String LOG_TAG = FetchMovieData.class.getSimpleName();
 
-
+        HttpURLConnection urlConnection = null;
+        BufferReader bufferReader = null;
+        String movieJsonStr = null; 
         @Override
         protected Void doInBackground(Void... params) {
 
@@ -80,10 +82,43 @@ public class MainFragment extends Fragment {
                     .appendQueryParameter(startDate,stDate)
                     .appendQueryParameter(endDate,todayDate)
                     .appendQueryParameter(app_id,"35f4a6a472c42472f7f14863e5c108a2").build();
-
+                    
+                URL url = new URL(movieUrl.toString());    
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+                
+                InputStream inputStream =  urlConnection.getInputStream();
+                
+                if(inputStream == null){
+                    return null;
+                }
+                
+                bufferReader = new BufferReader(new InputStreamReader(inputStream));
+                
+                String line;
+                StringBuffer buffer = new StringBuffer();
+                if((line = bufferReader.readLine()) != null){
+                    buffer.append(line + "\n");
+                }
+                if(buffer.length() == 0){
+                    return null;
+                }
+                movieJsonStr = buffer.toString();
                 Log.v(LOG_TAG,"Date UdaProject:" + movieUrl);
-            }catch (Exception e){
-                Log.v(LOG_TAG,"Date UdaProject:" + e);
+            }catch (IOException  e){
+                Log.e(LOG_TAG,"UdaProject Error:" + e);
+            }finally(){
+                if(urlConnection != null){
+                    urlConnection.disconnect();
+                }
+                if(bufferReader != null){
+                    try{
+                        bufferReader.close();
+                    }catch(IOException e){
+                        Log.e(LOG_TAG,"UdaProject Error:" + e);
+                    }
+                }
             }
 
             return null;
