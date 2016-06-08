@@ -60,14 +60,15 @@ public class MainFragment extends Fragment {
         HttpURLConnection urlConnection = null;
         BufferReader bufferReader = null;
         String movieJsonStr = null; 
+        
         @Override
-        protected Void doInBackground(Void... params) {
+        protected Void doInBackground() {
 
             try {
                 final String Base_Url = "https://api.themoviedb.org/3/discover/movie?";
                 final String startDate = "primary_release_date.gte";
                 final String endDate = "primary_release_date.lte";
-                final String app_id = "app_key";
+                final String app_id = "api_key";
 
                 Date date = new Date();
                 String stringDate = date.toString();
@@ -120,10 +121,34 @@ public class MainFragment extends Fragment {
                     }
                 }
             }
+            
+            try {
+                return parseMovieData(movieJsonStr);
+            } catch (JSONException e) {
+                Log.e(LOG_TAG, e.getMessage(), e);
+                e.printStackTrace();
+            }
 
             return null;
         }
 
+        private String[] parseMovieData(string movieString) throws JSONString{
+            final String MOVIE_TITLE = "original_title";
+            final String MOVIE_TOP  = "results";
+            String[] titles = {};
+            
+            JSONObject movieJson = new JSONObject(movieString);
+            JSONArray movieResults = movieJson.getJSONArray(MOVIE_TOP);
+            
+            for(int i = 0; i<movieResults.length();i++){
+                JSONObject resultJson = movieResults.getJSONObject(i);
+                String title = resultJson.getSring(MOVIE_TITLE);
+                titles[i] = title;
+            }
+            
+            return titles;
+        }
+        
         public String monthSimplified(String date){
             String month ="";
             switch(date){
