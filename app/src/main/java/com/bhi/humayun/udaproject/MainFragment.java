@@ -47,7 +47,15 @@ public class MainFragment extends Fragment {
 
         ListView listview = (ListView) rootView.findViewById(R.id.listview_forecast);
         listview.setAdapter(movieData);
-
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+            
+             @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l){
+                String movieDT = movieData.getItem(position);
+                Intent intent = new Intent(getActivity(), DetailActivity.class).putExtra(Intent.EXTRA_TEXT, movieDT);
+                startActivity(intent);
+            }
+        });
 
 
         return rootView;
