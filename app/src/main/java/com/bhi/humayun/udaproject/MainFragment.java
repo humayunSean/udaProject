@@ -1,5 +1,7 @@
 package com.bhi.humayun.udaproject;
 
+import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -8,10 +10,24 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.Toast;
+import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -22,7 +38,7 @@ import java.util.List;
  */
 public class MainFragment extends Fragment {
 
-
+    private final String LOG_TAG = FetchMovieData.class.getSimpleName();
 
     @Override
     public void onStart() {
@@ -31,28 +47,42 @@ public class MainFragment extends Fragment {
         fetchMovieData.execute();
     }
 
-    ArrayAdapter<String> movieData;
+    CustomAdapter customAdapter;
 
     public MainFragment(){}
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
 
-        String[] data = {"Hello World","Not so hello"};
-        List<String> movieString = new ArrayList<String>(Arrays.asList(data));
+        String[] data = {"Hello World"};
+   //     List<String> movieString = new ArrayList<String>(Arrays.asList(data));
 
-        movieData = new ArrayAdapter<String>(getActivity(), R.layout.list_item, R.id.list_item_textview, movieString);
+        String[] poster = {"http://image.tmdb.org/t/p/w185//811DjJTon9gD6hZ8nCjSitaIXFQ.jpg"};
+    //    List<String> posterString = new ArrayList<String>(Arrays.asList(data));
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        String[] titlePath = new String[data.length];
+    //    MovieDB[] movieDBs = new MovieDB[data.length];
+        for (int i =0;i<data.length;i++ ){
+        //    MovieDB movieDB = new MovieDB();
+        //    movieDB.titlePath = data[i]+"#"+poster[i];
+         //   movieDBs[i] = movieDB;
+            titlePath[i] = data[i]+"#"+poster[i];
+        }
+
+        List<String> weekForecast = new ArrayList<String>(Arrays.asList(titlePath));
+
+        customAdapter = new CustomAdapter(getActivity(),R.layout.list_item, R.id.list_item_textview, weekForecast);
+ //       movieData = new ArrayAdapter<String>(getActivity(), R.layout.list_item, R.id.list_item_textview, movieString);
 
         ListView listview = (ListView) rootView.findViewById(R.id.listview_forecast);
-        listview.setAdapter(movieData);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+        listview.setAdapter(customAdapter);
+        listview.setOnItemClickListener(new AdapterView.OnItemClickListener(){
             
              @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l){
-                String movieDT = movieData.getItem(position);
-                Intent intent = new Intent(getActivity(), DetailActivity.class).putExtra(Intent.EXTRA_TEXT, movieDT);
+                String movieDT = customAdapter.getItem(position);
+                Intent intent = new Intent(getActivity(), com.bhi.humayun.udaproject.DetailActivity.class).putExtra(Intent.EXTRA_TEXT, movieDT);
                 startActivity(intent);
             }
         });
@@ -61,16 +91,15 @@ public class MainFragment extends Fragment {
         return rootView;
     }
 
-    public class FetchMovieData extends AsyncTask<Void,Void,Void>{
+    public class FetchMovieData extends AsyncTask<String,Void,String[]>{
 
-        private final String LOG_TAG = FetchMovieData.class.getSimpleName();
 
         HttpURLConnection urlConnection = null;
-        BufferReader bufferReader = null;
+        BufferedReader bufferReader = null;
         String movieJsonStr = null; 
         
         @Override
-        protected Void doInBackground() {
+        protected String[] doInBackground(String... param) {
 
             try {
                 final String Base_Url = "https://api.themoviedb.org/3/discover/movie?";
@@ -92,7 +121,7 @@ public class MainFragment extends Fragment {
                     .appendQueryParameter(endDate,todayDate)
                     .appendQueryParameter(app_id,"35f4a6a472c42472f7f14863e5c108a2").build();
                     
-                URL url = new URL(movieUrl.toString());    
+                URL url = new URL(movieUrl.toString());
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("GET");
                 urlConnection.connect();
@@ -103,7 +132,7 @@ public class MainFragment extends Fragment {
                     return null;
                 }
                 
-                bufferReader = new BufferReader(new InputStreamReader(inputStream));
+                bufferReader = new BufferedReader(new InputStreamReader(inputStream));
                 
                 String line;
                 StringBuffer buffer = new StringBuffer();
@@ -115,9 +144,9 @@ public class MainFragment extends Fragment {
                 }
                 movieJsonStr = buffer.toString();
                 Log.v(LOG_TAG,"Date UdaProject:" + movieUrl);
-            }catch (IOException  e){
+            }catch (IOException e){
                 Log.e(LOG_TAG,"UdaProject Error:" + e);
-            }finally(){
+            }finally{
                 if(urlConnection != null){
                     urlConnection.disconnect();
                 }
@@ -140,17 +169,25 @@ public class MainFragment extends Fragment {
             return null;
         }
 
-        private String[] parseMovieData(string movieString) throws JSONString{
-            final String MOVIE_TITLE = "original_title";
+        private String[] parseMovieData(String movieString) throws JSONException{
+            final String MOVIE_TITLE = "title";
             final String MOVIE_TOP  = "results";
-            String[] titles = {};
-            
+            final String MOVIE_POSTER  = "poster_path";
+
+            final String movieDbPath = "http://image.tmdb.org/t/p/w185/";
+
             JSONObject movieJson = new JSONObject(movieString);
             JSONArray movieResults = movieJson.getJSONArray(MOVIE_TOP);
-            
+
+            String[] titles = new String[movieResults.length()];
             for(int i = 0; i<movieResults.length();i++){
+                String title = "";
+                String poster = "";
                 JSONObject resultJson = movieResults.getJSONObject(i);
-                String title = resultJson.getSring(MOVIE_TITLE);
+
+                poster = movieDbPath+resultJson.getString(MOVIE_POSTER);
+                title = resultJson.getString(MOVIE_TITLE)+"#"+poster;
+
                 titles[i] = title;
             }
             
@@ -200,11 +237,74 @@ public class MainFragment extends Fragment {
         }
 
         @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            Date date = new Date();
-            String stringDate = date.toString();
-            Toast.makeText(getActivity(), stringDate, Toast.LENGTH_SHORT).show();
+        protected void onPostExecute(String[] result) {
+
+//            Date date = new Date();
+//            String stringDate = date.toString();
+//            Toast.makeText(getActivity(), stringDate, Toast.LENGTH_SHORT).show();
+
+
+               if (result != null) {
+                   customAdapter.clear();
+                for(String move:result) {
+                    customAdapter.add(move);
+                }
+            }
         }
     }
+
+    public class CustomAdapter extends ArrayAdapter<String>{
+
+        Context context;
+        private LayoutInflater inflater = null;
+        List<String> movieUrl;
+        int tl = 0;
+        String[] tit;
+        String[] pot;
+
+    /*    public CustomAdapter(Context cont,String[] title, String[] poster){
+            context = cont;
+            title1 = title;
+            poster1 = poster;
+            tl = title.length;
+
+        }
+    */
+   //     public CustomAdapter(Context context, int resource, MovieDB[] mov) {
+        public CustomAdapter(Context context, int resource, int rsc, List<String> mov){
+            super(context, resource, rsc, mov);
+            this.context = context;
+            this.movieUrl = mov;
+            inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        }
+
+
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ViewHolder viewHolder = new ViewHolder();
+            View rowView = inflater.inflate(R.layout.image_item,null);
+            viewHolder.mImg = (ImageView) rowView.findViewById(R.id.imageView1);
+            viewHolder.mTxt = (TextView) rowView.findViewById(R.id.text_view1);
+
+            String[] spil =  movieUrl.get(position).split("#");
+            Log.v(LOG_TAG, movieUrl.get(position) +"spil huma:" + spil[0]);
+            viewHolder.mTxt.setText(spil[0]);
+            Picasso.with(context).load(spil[1]).into(viewHolder.mImg);
+
+            return rowView;
+        }
+    }
+
+    protected static class ViewHolder
+    {
+        ImageView mImg;
+        TextView mTxt;
+    }
+
 }
+
+
+
+
+

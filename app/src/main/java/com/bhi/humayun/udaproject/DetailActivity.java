@@ -14,31 +14,28 @@
  * limitations under the License.
  */
 
-package com.example.android.sunshine.app;
+package com.bhi.humayun.udaproject;
 
-import android.support.v7.app.ActionBarActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.view.MenuItemCompat;
-import android.support.v7.widget.ShareActionProvider;
-import android.util.Log;
+import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
-public class DetailActivity extends ActionBarActivity {
+import com.squareup.picasso.Picasso;
+
+public class DetailActivity extends AppCompatActivity{
 
   @Override
   public void onCreate(Bundle savedInstanceState){
-    supser.onCreate(savedInstanceState);
-    setContentView(R.id.activity_detail);
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.detail_activity);
     if(savedInstanceState == null){
-      getSupportFragmentManager().beginTransation().add(R.id.container,new DetailFragment()).commit();
+      getSupportFragmentManager().beginTransaction().add(R.id.container,new DetailFragment()).commit();
     }
   }
   
@@ -56,7 +53,10 @@ public class DetailActivity extends ActionBarActivity {
       Intent intent = getActivity().getIntent();
       if(intent != null && intent.hasExtra(Intent.EXTRA_TEXT)){
         movieDtls = intent.getStringExtra(Intent.EXTRA_TEXT);
-        ((TextView) rootView.findViewById(R.id.detail_text)).setText(movieDtls);
+        String[] spil =  movieDtls.split("#");
+        ((TextView) rootView.findViewById(R.id.detail_text)).setText(spil[0]);
+        ImageView imageView = (ImageView) rootView.findViewById(R.id.detailimage);
+        Picasso.with(getActivity()).load(spil[1]).into(imageView);
       }
       return rootView;
     }
